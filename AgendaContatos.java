@@ -14,6 +14,8 @@ public class AgendaContatos extends JFrame {
     private ArrayList<Contato> contatos;
     private File arquivoContatos;
 
+    private Contato contatoEditado;
+
     public AgendaContatos() {
         contatos = new ArrayList<>();
         arquivoContatos = new File("contatos.txt");
@@ -94,6 +96,8 @@ public class AgendaContatos extends JFrame {
         telefoneField.setText("");
         apelidoField.setText("");
         tipoContatoComboBox.setSelectedIndex(0);
+
+        exibirListaContatos(); // Atualiza a lista de contatos após adicionar um novo contato
     }
 
     private void exibirListaContatos() {
@@ -103,7 +107,7 @@ public class AgendaContatos extends JFrame {
             JPanel contatoPanel = new JPanel(new BorderLayout());
             contatoPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
-            JLabel nomeLabel = new JLabel(contato.getNome());
+            JLabel nomeLabel = new JLabel(contato.getNome() + " | ");
             JLabel tipoContatoLabel = new JLabel(contato.getTipoContato());
 
             JButton editarButton = new JButton("Editar");
@@ -135,21 +139,56 @@ public class AgendaContatos extends JFrame {
     }
 
     private void editarContato(Contato contato) {
+        contatoEditado = contato;
+
         nomeField.setText(contato.getNome());
         telefoneField.setText(contato.getTelefone());
         apelidoField.setText(contato.getApelido());
         tipoContatoComboBox.setSelectedItem(contato.getTipoContato());
 
-        int opcao = JOptionPane.showConfirmDialog(this, "Tem certeza que deseja editar esse contato?",
-                "Confirmação", JOptionPane.YES_NO_OPTION);
+        JOptionPane.showMessageDialog(this, "Edição em andamento. Preencha os campos e clique em 'Salvar'.");
 
-        if (opcao == JOptionPane.YES_OPTION) {
-            contatos.remove(contato);
-            salvarContatos();
-
-            JOptionPane.showMessageDialog(this, "Edição realizada com sucesso.");
-        }
+        adicionarButton.setText("Salvar");
+        adicionarButton.removeActionListener(adicionarButton.getActionListeners()[0]);
+        adicionarButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                salvarEdicaoContato(contatoEditado);
+            }
+        });
     }
+
+    private void salvarEdicaoContato(Contato contato) {
+        String nome = nomeField.getText();
+        String telefone = telefoneField.getText();
+        String apelido = apelidoField.getText();
+        String tipoContato = tipoContatoComboBox.getSelectedItem().toString();
+
+        contato.setNome(nome);
+        contato.setTelefone(telefone);
+        contato.setApelido(apelido);
+        contato.setTipoContato(tipoContato);
+
+        salvarContatos();
+
+        JOptionPane.showMessageDialog(this, "Contato editado com sucesso.");
+
+        nomeField.setText("");
+        telefoneField.setText("");
+        apelidoField.setText("");
+        tipoContatoComboBox.setSelectedIndex(0);
+        adicionarButton.setText("Adicionar");
+        adicionarButton.removeActionListener(adicionarButton.getActionListeners()[0]);
+        adicionarButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                adicionarContato();
+            }
+        });
+
+        exibirListaContatos(); // Atualiza a lista de contatos após a edição
+    }
+
 
     private void deletarContato(Contato contato) {
         int opcao = JOptionPane.showConfirmDialog(this, "Tem certeza que deseja deletar esse contato?",
@@ -159,7 +198,7 @@ public class AgendaContatos extends JFrame {
             contatos.remove(contato);
             salvarContatos();
 
-            JOptionPane.showMessageDialog(this, "A operação foi realizada com sucesso.");
+            JOptionPane.showMessageDialog(this, "Contato deletado com sucesso.");
             exibirListaContatos();
         }
     }
@@ -179,27 +218,29 @@ public class AgendaContatos extends JFrame {
     }
 
     private void carregarContatos() {
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(arquivoContatos));
-            String linha;
-            while ((linha = reader.readLine()) != null) {
-                String[] partes = linha.split(";");
-                if (partes.length == 4) {
-                    String nome = partes[0];
-                    String telefone = partes[1];
-                    String apelido = partes[2];
-                    String tipoContato = partes[3];
-                    Contato contato = new Contato(nome, telefone, apelido, tipoContato);
-                    contatos.add(contato);
-                }
+        if (arquivoContatos.exists()) {
+            try {
+                ObjectInputStream reader = new ObjectInputStream(new FileInputStream(arquivoContatos));
+                contatos = (ArrayList<Contato>) reader.readObject();
+                reader.close();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
             }
-            reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
-    private class Contato {
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                AgendaContatos agenda = new AgendaContatos();
+                agenda.setVisible(true);
+                agenda.carregarContatos();
+            }
+        });
+    }
+
+    public class Contato implements Serializable {
         private String nome;
         private String telefone;
         private String apelido;
@@ -216,27 +257,32 @@ public class AgendaContatos extends JFrame {
             return nome;
         }
 
+        public void setNome(String nome) {
+            this.nome = nome;
+        }
+
         public String getTelefone() {
             return telefone;
+        }
+
+        public void setTelefone(String telefone) {
+            this.telefone = telefone;
         }
 
         public String getApelido() {
             return apelido;
         }
 
+        public void setApelido(String apelido) {
+            this.apelido = apelido;
+        }
+
         public String getTipoContato() {
             return tipoContato;
         }
-    }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                AgendaContatos agenda = new AgendaContatos();
-                agenda.setVisible(true);
-                agenda.carregarContatos();
-            }
-        });
+        public void setTipoContato(String tipoContato) {
+            this.tipoContato = tipoContato;
+        }
     }
 }
