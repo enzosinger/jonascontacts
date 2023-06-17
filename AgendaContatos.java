@@ -218,16 +218,26 @@ public class AgendaContatos extends JFrame {
     }
 
     private void carregarContatos() {
-        if (arquivoContatos.exists()) {
-            try {
-                ObjectInputStream reader = new ObjectInputStream(new FileInputStream(arquivoContatos));
-                contatos = (ArrayList<Contato>) reader.readObject();
-                reader.close();
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(arquivoContatos));
+            String linha;
+            while ((linha = reader.readLine()) != null) {
+                String[] partes = linha.split(";");
+                if (partes.length == 4) {
+                    String nome = partes[0];
+                    String telefone = partes[1];
+                    String apelido = partes[2];
+                    String tipoContato = partes[3];
+                    Contato contato = new Contato(nome, telefone, apelido, tipoContato);
+                    contatos.add(contato);
+                }
             }
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -236,9 +246,11 @@ public class AgendaContatos extends JFrame {
                 AgendaContatos agenda = new AgendaContatos();
                 agenda.setVisible(true);
                 agenda.carregarContatos();
+                agenda.exibirListaContatos();
             }
         });
     }
+
 
     public class Contato implements Serializable {
         private String nome;
