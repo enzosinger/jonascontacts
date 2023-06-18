@@ -110,6 +110,8 @@ public class AgendaContatos extends JFrame {
             JLabel nomeLabel = new JLabel(contato.getNome() + " | ");
             JLabel tipoContatoLabel = new JLabel(contato.getTipoContato());
 
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
             JButton editarButton = new JButton("Editar");
             editarButton.addActionListener(new ActionListener() {
                 @Override
@@ -118,18 +120,20 @@ public class AgendaContatos extends JFrame {
                 }
             });
 
-            JButton deletarButton = new JButton("Deletar");
-            deletarButton.addActionListener(new ActionListener() {
+            JButton infoButton = new JButton("Informações do contato");
+            infoButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    deletarContato(contato);
+                    exibirInformacoesContato(contato);
                 }
             });
 
+            buttonPanel.add(editarButton);
+            buttonPanel.add(infoButton);
+
             contatoPanel.add(nomeLabel, BorderLayout.WEST);
             contatoPanel.add(tipoContatoLabel, BorderLayout.CENTER);
-            contatoPanel.add(editarButton, BorderLayout.EAST);
-            contatoPanel.add(deletarButton, BorderLayout.SOUTH);
+            contatoPanel.add(buttonPanel, BorderLayout.EAST);
 
             contatosPanel.add(contatoPanel);
         }
@@ -137,6 +141,14 @@ public class AgendaContatos extends JFrame {
         contatosPanel.revalidate();
         contatosPanel.repaint();
     }
+
+    private void exibirInformacoesContato(Contato contato) {
+        String mensagem = "Nome: " + contato.getNome() + "\nApelido: " + contato.getApelido() + "\nTipo de Contato: " + contato.getTipoContato() + "\nTelefone: " + contato.getTelefone();
+        JOptionPane.showMessageDialog(this, mensagem, "Informações do Contato", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+
+
 
     private void editarContato(Contato contato) {
         contatoEditado = contato;
