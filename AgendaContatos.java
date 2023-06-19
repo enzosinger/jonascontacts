@@ -16,6 +16,9 @@ public class AgendaContatos extends JFrame {
 
     private Contato contatoEditado;
 
+    private JComboBox<String> filtroTipoContatoComboBox;
+    private JButton filtrarButton;
+
     public AgendaContatos() {
         contatos = new ArrayList<>();
         arquivoContatos = new File("contatos.txt");
@@ -78,10 +81,20 @@ public class AgendaContatos extends JFrame {
 
         pack();
         setLocationRelativeTo(null);
+
     }
+
 
     private void adicionarContato() {
         String nome = nomeField.getText();
+        if (nome.isEmpty()) {
+            try {
+                throw new MeuException("O nome do contato não pode estar vazio.");
+            } catch (MeuException e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
         String telefone = telefoneField.getText();
         String apelido = apelidoField.getText();
         String tipoContato = tipoContatoComboBox.getSelectedItem().toString();
@@ -269,6 +282,7 @@ public class AgendaContatos extends JFrame {
             public void run() {
                 AgendaContatos agenda = new AgendaContatos();
                 agenda.carregarContatos();
+                agenda.exibirListaContatos();
                 agenda.setVisible(true);
             }
         });
@@ -356,5 +370,11 @@ class ContatoFamiliar extends Contato {
 class ContatoServico extends Contato {
     public ContatoServico(String nome, String telefone, String apelido) {
         super(nome, telefone, apelido, "Serviço");
+    }
+}
+
+class MeuException extends Exception {
+    public MeuException(String mensagem) {
+        super(mensagem);
     }
 }
