@@ -16,9 +16,6 @@ public class AgendaContatos extends JFrame {
 
     private Contato contatoEditado;
 
-    private JComboBox<String> filtroTipoContatoComboBox;
-    private JButton filtrarButton;
-
     public AgendaContatos() {
         contatos = new ArrayList<>();
         arquivoContatos = new File("contatos.txt");
@@ -26,6 +23,7 @@ public class AgendaContatos extends JFrame {
         setTitle("Agenda");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
+
 
         // Painel de cadastro de contato
         JPanel cadastroPanel = new JPanel(new GridLayout(6, 2));
@@ -81,8 +79,9 @@ public class AgendaContatos extends JFrame {
 
         pack();
         setLocationRelativeTo(null);
-
+        exibirListaContatos();
     }
+
 
     private void adicionarContato() {
         String nome = nomeField.getText();
@@ -216,6 +215,7 @@ public class AgendaContatos extends JFrame {
             }
         });
     }
+
     private void salvarEdicaoContato(Contato contato) {
         String novoNome = nomeField.getText();
         String novoTelefone = telefoneField.getText();
@@ -225,16 +225,44 @@ public class AgendaContatos extends JFrame {
         contato.setNome(novoNome);
         contato.setTelefone(novoTelefone);
         contato.setApelido(novoApelido);
-        contato.setTipoContato(novoTipoContato);
+
+        // Atualizar o tipo de contato se for diferente
+        if (!contato.getTipoContato().equals(novoTipoContato)) {
+            Contato novoContato;
+            switch (novoTipoContato) {
+                case "Empresarial":
+                    novoContato = new ContatoEmpresarial(novoNome, novoTelefone, novoApelido);
+                    break;
+                case "Amigo":
+                    novoContato = new ContatoAmigo(novoNome, novoTelefone, novoApelido);
+                    break;
+                case "Cliente":
+                    novoContato = new ContatoCliente(novoNome, novoTelefone, novoApelido);
+                    break;
+                case "Estabelecimento":
+                    novoContato = new ContatoEstabelecimento(novoNome, novoTelefone, novoApelido);
+                    break;
+                case "Familiar":
+                    novoContato = new ContatoFamiliar(novoNome, novoTelefone, novoApelido);
+                    break;
+                case "Serviço":
+                    novoContato = new ContatoServico(novoNome, novoTelefone, novoApelido);
+                    break;
+                case "Emergencial":
+                    novoContato = new ContatoEmergencial(novoNome, novoTelefone, novoApelido);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Tipo de contato inválido: " + novoTipoContato);
+            }
+            contatos.remove(contato);
+            contatos.add(novoContato);
+        }
 
         salvarContatos();
 
         JOptionPane.showMessageDialog(this, "A operação foi realizada com sucesso.");
 
-        nomeField.setText("");
-        telefoneField.setText("");
-        apelidoField.setText("");
-        tipoContatoComboBox.setSelectedIndex(0);
+        limparCampos();
         adicionarButton.setText("Adicionar");
         adicionarButton.removeActionListener(adicionarButton.getActionListeners()[0]);
         adicionarButton.addActionListener(new ActionListener() {
@@ -246,6 +274,7 @@ public class AgendaContatos extends JFrame {
 
         exibirListaContatos();
     }
+
 
     private void salvarContatos() {
         try {
@@ -317,6 +346,9 @@ public class AgendaContatos extends JFrame {
                             case "Serviço":
                                 novoContato = new ContatoServico(nome, telefone, apelido);
                                 break;
+                            case "Emergencial":
+                                novoContato = new ContatoEmergencial(nome, telefone, apelido);
+                                break;
                             default:
                                 throw new IllegalArgumentException("Tipo de contato inválido: " + tipoContato);
                         }
@@ -337,6 +369,7 @@ public class AgendaContatos extends JFrame {
                 AgendaContatos agenda = new AgendaContatos();
                 agenda.carregarContatos();
                 agenda.setVisible(true);
+                agenda.exibirListaContatos();
             }
         });
     }
