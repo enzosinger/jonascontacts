@@ -16,9 +16,6 @@ public class AgendaContatos extends JFrame {
 
     private Contato contatoEditado;
 
-    private JComboBox<String> filtroTipoContatoComboBox;
-    private JButton filtrarButton;
-
     public AgendaContatos() {
         contatos = new ArrayList<>();
         arquivoContatos = new File("contatos.txt");
@@ -268,7 +265,7 @@ public class AgendaContatos extends JFrame {
         }
     }
 
-    @SuppressWarnings("unchecked")
+
     private void carregarContatos() {
         if (arquivoContatos.exists()) {
             try {
@@ -295,15 +292,10 @@ public class AgendaContatos extends JFrame {
 
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
                 AgendaContatos agenda = new AgendaContatos();
                 agenda.carregarContatos();
                 agenda.exibirListaContatos();
                 agenda.setVisible(true);
-            }
-        });
     }
 }
 
@@ -396,4 +388,5 @@ class MeuException extends Exception {
         super(mensagem);
     }
 }
+
 
