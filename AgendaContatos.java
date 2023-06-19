@@ -35,7 +35,7 @@ public class AgendaContatos extends JFrame {
         JLabel apelidoLabel = new JLabel("Apelido:");
         apelidoField = new JTextField();
         JLabel tipoContatoLabel = new JLabel("Tipo de Contato:");
-        tipoContatoComboBox = new JComboBox<>(new String[]{"Empresarial", "Amigo", "Cliente", "Estabelecimento", "Familiar", "Serviço"});
+        tipoContatoComboBox = new JComboBox<>(new String[]{"Empresarial", "Amigo", "Cliente", "Estabelecimento", "Familiar", "Serviço", "Emergencial"});
         adicionarButton = new JButton("Adicionar");
         listaButton = new JButton("Lista de Contatos");
 
@@ -115,6 +115,9 @@ public class AgendaContatos extends JFrame {
                 break;
             case "Serviço":
                 novoContato = new ContatoServico(nome, telefone, apelido);
+                break;
+            case "Emergencial":
+                novoContato = new ContatoEmergencial(nome, telefone, apelido);
                 break;
             default:
                 novoContato = new Contato(nome, telefone, apelido, tipoContato);
@@ -380,6 +383,12 @@ class ContatoFamiliar extends Contato {
 class ContatoServico extends Contato {
     public ContatoServico(String nome, String telefone, String apelido) {
         super(nome, telefone, apelido, "Serviço");
+    }
+}
+
+class ContatoEmergencial extends Contato {
+    public ContatoEmergencial(String nome, String telefone, String apelido) {
+        super(nome, telefone, apelido, "Emergencial");
     }
 }
 
