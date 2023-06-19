@@ -86,8 +86,8 @@ public class AgendaContatos extends JFrame {
         String nome = nomeField.getText();
         if (nome.isEmpty()) {
             try {
-                throw new MeuException("O nome do contato não pode estar vazio.");
-            } catch (MeuException e) {
+                throw new Excecao("O nome do contato não pode estar vazio.");
+            } catch (Excecao e) {
                 JOptionPane.showMessageDialog(this, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -383,8 +383,8 @@ class ContatoServico extends Contato {
     }
 }
 
-class MeuException extends Exception {
-    public MeuException(String mensagem) {
+class Excecao extends Exception {
+    public Excecao(String mensagem) {
         super(mensagem);
     }
 }
