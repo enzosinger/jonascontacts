@@ -255,9 +255,14 @@ public class AgendaContatos extends JFrame {
 
     private void salvarContatos() {
         try {
-            ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(arquivoContatos));
-            outputStream.writeObject(contatos);
-            outputStream.close();
+            BufferedWriter writer = new BufferedWriter(new FileWriter(arquivoContatos));
+
+            for (Contato contato : contatos) {
+                writer.write(contato.getNome() + "," + contato.getTelefone() + "," + contato.getApelido() + "," + contato.getTipoContato());
+                writer.newLine();
+            }
+
+            writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -267,14 +272,27 @@ public class AgendaContatos extends JFrame {
     private void carregarContatos() {
         if (arquivoContatos.exists()) {
             try {
-                ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(arquivoContatos));
-                contatos = (ArrayList<Contato>) inputStream.readObject();
-                inputStream.close();
-            } catch (IOException | ClassNotFoundException e) {
+                BufferedReader reader = new BufferedReader(new FileReader(arquivoContatos));
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    String[] dados = line.split(",");
+                    String nome = dados[0];
+                    String telefone = dados[1];
+                    String apelido = dados[2];
+                    String tipoContato = dados[3];
+
+                    Contato contato = new Contato(nome, telefone, apelido, tipoContato);
+                    contatos.add(contato);
+                }
+
+                reader.close();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -378,3 +396,4 @@ class MeuException extends Exception {
         super(mensagem);
     }
 }
+
