@@ -38,7 +38,7 @@ public class AgendaContatos extends JFrame {
         JLabel apelidoLabel = new JLabel("Apelido:");
         apelidoField = new JTextField();
         JLabel tipoContatoLabel = new JLabel("Tipo de Contato:");
-        tipoContatoComboBox = new JComboBox<>(new String[]{"Empresarial", "Amigo", "Cliente", "Estabelecimento", "Familiar", "Serviço"});
+        tipoContatoComboBox = new JComboBox<>(new String[]{"Empresarial", "Amigo", "Cliente", "Estabelecimento", "Familiar", "Serviço", "Emergencial"});
         adicionarButton = new JButton("Adicionar");
         listaButton = new JButton("Lista de Contatos");
 
@@ -88,8 +88,8 @@ public class AgendaContatos extends JFrame {
         String nome = nomeField.getText();
         if (nome.isEmpty()) {
             try {
-                throw new MeuException("O nome do contato não pode estar vazio.");
-            } catch (MeuException e) {
+                throw new Excecao("O nome do contato não pode estar vazio.");
+            } catch (Excecao e) {
                 JOptionPane.showMessageDialog(this, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -118,6 +118,9 @@ public class AgendaContatos extends JFrame {
                 break;
             case "Serviço":
                 novoContato = new ContatoServico(nome, telefone, apelido);
+                break;
+            case "Emergencial":
+                novoContato = new ContatoEmergencial(nome, telefone, apelido);
                 break;
             default:
                 throw new IllegalArgumentException("Tipo de contato inválido: " + tipoContato);
@@ -249,7 +252,7 @@ public class AgendaContatos extends JFrame {
             BufferedWriter writer = new BufferedWriter(new FileWriter(arquivoContatos));
 
             for (Contato contato : contatos) {
-                writer.write(contato.getNome() + "," + contato.getTelefone() + "," + contato.getApelido() + "," + contato.getTipoContato());
+                writer.write(contato.getNome() + ";" + contato.getTelefone() + ";" + contato.getApelido() + ";" + contato.getTipoContato());
                 writer.newLine();
             }
 
@@ -448,9 +451,19 @@ class ContatoServico extends Contato {
     }
 }
 
-// Classe MeuException
-class MeuException extends Exception {
-    public MeuException(String mensagem) {
+class ContatoEmergencial extends Contato {
+    public ContatoEmergencial(String nome, String telefone, String apelido) {
+        super(nome, telefone, apelido);
+    }
+
+    @Override
+    public String getTipoContato() {
+        return "Emergencial";
+    }
+}
+
+class Excecao extends Exception {
+    public Excecao(String mensagem) {
         super(mensagem);
     }
 }
