@@ -16,6 +16,9 @@ public class AgendaContatos extends JFrame {
 
     private Contato contatoEditado;
 
+    private JComboBox<String> filtroTipoContatoComboBox;
+    private JButton filtrarButton;
+
     public AgendaContatos() {
         contatos = new ArrayList<>();
         arquivoContatos = new File("contatos.txt");
@@ -35,7 +38,7 @@ public class AgendaContatos extends JFrame {
         JLabel apelidoLabel = new JLabel("Apelido:");
         apelidoField = new JTextField();
         JLabel tipoContatoLabel = new JLabel("Tipo de Contato:");
-        tipoContatoComboBox = new JComboBox<>(new String[]{"Empresarial", "Amigo", "Cliente", "Estabelecimento", "Familiar", "Serviço", "Emergencial"});
+        tipoContatoComboBox = new JComboBox<>(new String[]{"Empresarial", "Amigo", "Cliente", "Estabelecimento", "Familiar", "Serviço"});
         adicionarButton = new JButton("Adicionar");
         listaButton = new JButton("Lista de Contatos");
 
@@ -81,13 +84,12 @@ public class AgendaContatos extends JFrame {
 
     }
 
-
     private void adicionarContato() {
         String nome = nomeField.getText();
         if (nome.isEmpty()) {
             try {
-                throw new Excecao("O nome do contato não pode estar vazio.");
-            } catch (Excecao e) {
+                throw new MeuException("O nome do contato não pode estar vazio.");
+            } catch (MeuException e) {
                 JOptionPane.showMessageDialog(this, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -97,6 +99,7 @@ public class AgendaContatos extends JFrame {
         String tipoContato = tipoContatoComboBox.getSelectedItem().toString();
 
         Contato novoContato;
+
         switch (tipoContato) {
             case "Empresarial":
                 novoContato = new ContatoEmpresarial(nome, telefone, apelido);
@@ -116,25 +119,21 @@ public class AgendaContatos extends JFrame {
             case "Serviço":
                 novoContato = new ContatoServico(nome, telefone, apelido);
                 break;
-            case "Emergencial":
-                novoContato = new ContatoEmergencial(nome, telefone, apelido);
-                break;
             default:
-                novoContato = new Contato(nome, telefone, apelido, tipoContato);
-                break;
+                throw new IllegalArgumentException("Tipo de contato inválido: " + tipoContato);
         }
 
         contatos.add(novoContato);
-        salvarContatos();
+        limparCampos();
+        atualizarArquivoContatos();
+        exibirListaContatos();
+    }
 
-        JOptionPane.showMessageDialog(this, "A operação foi realizada com sucesso.");
-
+    private void limparCampos() {
         nomeField.setText("");
         telefoneField.setText("");
         apelidoField.setText("");
         tipoContatoComboBox.setSelectedIndex(0);
-
-        exibirListaContatos(); // Atualiza a lista de contatos após adicionar um novo contato
     }
 
     private void exibirListaContatos() {
@@ -144,10 +143,18 @@ public class AgendaContatos extends JFrame {
             JPanel contatoPanel = new JPanel(new BorderLayout());
             contatoPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
-            JLabel nomeLabel = new JLabel(contato.getNome() + " | ");
+            JLabel nomeLabel = new JLabel(contato.getNome() + " | " + contato.getTipoContato());
             JLabel tipoContatoLabel = new JLabel(contato.getTipoContato());
+            contatoPanel.add(tipoContatoLabel, BorderLayout.CENTER);
+            contatoPanel.add(nomeLabel, BorderLayout.CENTER);
 
-            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton informacoesButton = new JButton("Informações");
+            informacoesButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    exibirInformacoesContato(contato);
+                }
+            });
 
             JButton editarButton = new JButton("Editar");
             editarButton.addActionListener(new ActionListener() {
@@ -157,30 +164,19 @@ public class AgendaContatos extends JFrame {
                 }
             });
 
-            JButton infoButton = new JButton("Informações do contato");
-            infoButton.addActionListener(new ActionListener() {
+            JButton removerButton = new JButton("Remover");
+            removerButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    exibirInformacoesContato(contato);
+                    removerContato(contato);
                 }
             });
 
-            JButton deletarButton = new JButton("Deletar");
-            deletarButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    deletarContato(contato);
-                }
-            });
-
+            JPanel buttonPanel = new JPanel();
+            buttonPanel.add(informacoesButton);
             buttonPanel.add(editarButton);
-            buttonPanel.add(infoButton);
-            buttonPanel.add(deletarButton);
-
-            contatoPanel.add(nomeLabel, BorderLayout.WEST);
-            contatoPanel.add(tipoContatoLabel, BorderLayout.CENTER);
+            buttonPanel.add(removerButton);
             contatoPanel.add(buttonPanel, BorderLayout.EAST);
-
             contatosPanel.add(contatoPanel);
         }
 
@@ -189,9 +185,14 @@ public class AgendaContatos extends JFrame {
     }
 
     private void exibirInformacoesContato(Contato contato) {
-        String mensagem = "Nome: " + contato.getNome() + "\nApelido: " + contato.getApelido() + "\nTipo de Contato: " + contato.getTipoContato() + "\nTelefone: " + contato.getTelefone();
+        String mensagem = "Nome: " + contato.getNome() + "\n" +
+                "Telefone: " + contato.getTelefone() + "\n" +
+                "Apelido: " + contato.getApelido() + "\n" +
+                "Tipo de Contato: " + contato.getTipoContato();
+
         JOptionPane.showMessageDialog(this, mensagem, "Informações do Contato", JOptionPane.INFORMATION_MESSAGE);
     }
+
 
     private void editarContato(Contato contato) {
         contatoEditado = contato;
@@ -212,7 +213,6 @@ public class AgendaContatos extends JFrame {
             }
         });
     }
-
     private void salvarEdicaoContato(Contato contato) {
         String novoNome = nomeField.getText();
         String novoTelefone = telefoneField.getText();
@@ -244,15 +244,6 @@ public class AgendaContatos extends JFrame {
         exibirListaContatos();
     }
 
-    private void deletarContato(Contato contato) {
-        contatos.remove(contato);
-        salvarContatos();
-
-        JOptionPane.showMessageDialog(this, "O contato foi removido com sucesso.");
-
-        exibirListaContatos();
-    }
-
     private void salvarContatos() {
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(arquivoContatos));
@@ -269,133 +260,197 @@ public class AgendaContatos extends JFrame {
     }
 
 
-    private void carregarContatos() {
+    private void removerContato(Contato contato) {
+        int resposta = JOptionPane.showConfirmDialog(this, "Tem certeza que deseja remover o contato?", "Confirmação de Remoção", JOptionPane.YES_NO_OPTION);
+
+        if (resposta == JOptionPane.YES_OPTION) {
+            contatos.remove(contato);
+            atualizarArquivoContatos();
+            exibirListaContatos();
+        }
+    }
+
+    private void atualizarArquivoContatos() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(arquivoContatos))) {
+            for (Contato contato : contatos) {
+                writer.write(contato.getNome() + ";" + contato.getTelefone() + ";" + contato.getApelido() + ";" + contato.getTipoContato());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Erro ao salvar contatos.", "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public void carregarContatos() {
         if (arquivoContatos.exists()) {
-            try {
-                BufferedReader reader = new BufferedReader(new FileReader(arquivoContatos));
+            try (BufferedReader reader = new BufferedReader(new FileReader(arquivoContatos))) {
                 String line;
-
                 while ((line = reader.readLine()) != null) {
-                    String[] dados = line.split(",");
-                    String nome = dados[0];
-                    String telefone = dados[1];
-                    String apelido = dados[2];
-                    String tipoContato = dados[3];
+                    String[] parts = line.split(";");
+                    if (parts.length == 4) {
+                        String nome = parts[0];
+                        String telefone = parts[1];
+                        String apelido = parts[2];
+                        String tipoContato = parts[3];
 
-                    Contato contato = new Contato(nome, telefone, apelido, tipoContato);
-                    contatos.add(contato);
+                        Contato novoContato;
+
+                        switch (tipoContato) {
+                            case "Empresarial":
+                                novoContato = new ContatoEmpresarial(nome, telefone, apelido);
+                                break;
+                            case "Amigo":
+                                novoContato = new ContatoAmigo(nome, telefone, apelido);
+                                break;
+                            case "Cliente":
+                                novoContato = new ContatoCliente(nome, telefone, apelido);
+                                break;
+                            case "Estabelecimento":
+                                novoContato = new ContatoEstabelecimento(nome, telefone, apelido);
+                                break;
+                            case "Familiar":
+                                novoContato = new ContatoFamiliar(nome, telefone, apelido);
+                                break;
+                            case "Serviço":
+                                novoContato = new ContatoServico(nome, telefone, apelido);
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Tipo de contato inválido: " + tipoContato);
+                        }
+
+                        contatos.add(novoContato);
+                    }
                 }
-
-                reader.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Erro ao carregar contatos.", "Erro", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
-
     public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
                 AgendaContatos agenda = new AgendaContatos();
                 agenda.carregarContatos();
-                agenda.exibirListaContatos();
                 agenda.setVisible(true);
+            }
+        });
     }
 }
 
-class Contato implements Serializable {
+// Classe Contato (abstrata)
+abstract class Contato {
     private String nome;
     private String telefone;
     private String apelido;
-    private String tipoContato;
 
-    public Contato(String nome, String telefone, String apelido, String tipoContato) {
+    public Contato(String nome, String telefone, String apelido) {
         this.nome = nome;
         this.telefone = telefone;
         this.apelido = apelido;
-        this.tipoContato = tipoContato;
     }
-
-    // getters e setters
 
     public String getNome() {
         return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
     }
 
     public String getTelefone() {
         return telefone;
     }
 
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
-    }
-
     public String getApelido() {
         return apelido;
     }
 
-    public void setApelido(String apelido) {
-        this.apelido = apelido;
+    public abstract String getTipoContato();
+
+    public void setNome(String novoNome) {
+        this.nome = novoNome;
     }
 
-    public String getTipoContato() {
-        return tipoContato;
+    public void setTelefone(String novoTelefone) {
+        this.telefone = novoTelefone;
     }
 
-    public void setTipoContato(String tipoContato) {
-        this.tipoContato = tipoContato;
+    public void setApelido(String novoApelido) {
+        this.apelido = novoApelido;
+    }
+
+    public void setTipoContato(String novoTipoContato) {
     }
 }
 
+// Subclasses de Contato
 class ContatoEmpresarial extends Contato {
     public ContatoEmpresarial(String nome, String telefone, String apelido) {
-        super(nome, telefone, apelido, "Empresarial");
+        super(nome, telefone, apelido);
+    }
+
+    @Override
+    public String getTipoContato() {
+        return "Empresarial";
     }
 }
 
 class ContatoAmigo extends Contato {
     public ContatoAmigo(String nome, String telefone, String apelido) {
-        super(nome, telefone, apelido, "Amigo");
+        super(nome, telefone, apelido);
+    }
+
+    @Override
+    public String getTipoContato() {
+        return "Amigo";
     }
 }
 
 class ContatoCliente extends Contato {
     public ContatoCliente(String nome, String telefone, String apelido) {
-        super(nome, telefone, apelido, "Cliente");
+        super(nome, telefone, apelido);
+    }
+
+    @Override
+    public String getTipoContato() {
+        return "Cliente";
     }
 }
 
 class ContatoEstabelecimento extends Contato {
     public ContatoEstabelecimento(String nome, String telefone, String apelido) {
-        super(nome, telefone, apelido, "Estabelecimento");
+        super(nome, telefone, apelido);
+    }
+
+    @Override
+    public String getTipoContato() {
+        return "Estabelecimento";
     }
 }
 
 class ContatoFamiliar extends Contato {
     public ContatoFamiliar(String nome, String telefone, String apelido) {
-        super(nome, telefone, apelido, "Familiar");
+        super(nome, telefone, apelido);
+    }
+
+    @Override
+    public String getTipoContato() {
+        return "Familiar";
     }
 }
 
 class ContatoServico extends Contato {
     public ContatoServico(String nome, String telefone, String apelido) {
-        super(nome, telefone, apelido, "Serviço");
+        super(nome, telefone, apelido);
+    }
+
+    @Override
+    public String getTipoContato() {
+        return "Serviço";
     }
 }
 
-class ContatoEmergencial extends Contato {
-    public ContatoEmergencial(String nome, String telefone, String apelido) {
-        super(nome, telefone, apelido, "Emergencial");
-    }
-}
-
-class Excecao extends Exception {
-    public Excecao(String mensagem) {
+// Classe MeuException
+class MeuException extends Exception {
+    public MeuException(String mensagem) {
         super(mensagem);
     }
 }
-
-
